@@ -1,0 +1,9 @@
+node_modules/
+build/
+coverage/
+coverage.json
+
+.idea
+.vscode
+
+.secret
