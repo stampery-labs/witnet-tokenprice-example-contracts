@@ -30,6 +30,11 @@ contract TokenPriceContest {
   // first day from which start counting to enable certain operations
   uint256 public firstDay;
 
+  constructor (uint256 _firstDay) public {
+    // TODO: Verify that firstDay is valid? after block.timestamp?
+    firstDay = _firstDay;
+  }
+
   // Executes data request
   function placeBet(uint8 _tokenId) public {
     // calculateDay
@@ -75,7 +80,9 @@ contract TokenPriceContest {
 
   // Read last block timestamp and calculate difference with firstDay timestamp
   function calculateDay() public view returns (uint8) {
+    uint256 daysDiff = (block.timestamp - firstDay) / 86400;
 
+    return uint8(daysDiff);
   }
 
   // Needs to return l||r
