@@ -3,18 +3,19 @@ pragma experimental ABIEncoderV2;
 
 contract TokenPriceContest {
 
-  // states define the action allowed in the current window
+  event BetPlaced(uint8, uint8, address, uint256);
+
+  // States define the action allowed in the current window
   enum DayState{BET, WAIT, RESOLVE, PAYOUT, FINAL}
   struct TokenDay{
     uint256 totalAmount;
     mapping (address => uint256) participations;
   }
 
+  // Structure with all the current day bets information
   struct DayInfo{
     // total prize for a day
     uint256 grandPrize;
-    // state of the day
-    DayState state;
     // ordered ranking after result has been resolved
     uint8[] ranking;
     // result as given by the data request (floats multiplied by 10000)
@@ -23,10 +24,12 @@ contract TokenPriceContest {
     uint256 witnetRequestId;
   }
 
-  // mapping containing the day info
+  // Mapping containing the day info
   mapping(uint8 => DayInfo) dayInfos;
+
   // uint16 contains two uint8 refering to day||TokenId
-  mapping (uint16 => TokenDay[]) bets;
+  mapping (uint16 => TokenDay) bets;
+
   // first day from which start counting to enable certain operations
   uint256 public firstDay;
 
@@ -36,11 +39,27 @@ contract TokenPriceContest {
   }
 
   // Executes data request
-  function placeBet(uint8 _tokenId) public {
-    // calculateDay
-    // if previous day keeps been in BET state, put it in WAIT
-    // u8Concat
-    // bets upsert (TokenDay and DayInfo)
+  function placeBet(uint8 _tokenId) public payable {
+    require(msg.value > 0);
+
+    // Calculate the day of the current bet
+    uint8 betDay = calculateDay();
+
+    // Check if BET is allowed
+    // TODO: change getDayState as below
+    require(getDayState(firstDay, block.timestamp, betDay) == DayState.BET);
+
+    // Create Bet: u8Concat
+    uint16 betId = u8Concat(betDay, _tokenId);
+
+    // Upsert Bets mapping (day||tokenId) with TokenDay
+    bets[betId].totalAmount = bets[betId].totalAmount + msg.value;
+    bets[betId].participations[msg.sender] = msg.value;
+
+    // Upsert DayInfo (day)
+    dayInfos[betDay].grandPrize = dayInfos[betDay].grandPrize + msg.value;
+
+    emit BetPlaced(betDay, _tokenId, msg.sender, msg.value);
   }
 
   // Executes data request
@@ -59,9 +78,33 @@ contract TokenPriceContest {
     // Else refund participants
   }
 
+  // TODO: change _firstDay argument for attribute
+  // TODO: retrieve _now from block.timestamp
+  function getDayState(uint _firstDay, uint _now, uint8 _day) public view returns (DayState) {
+    uint256 currentDay = (_now - _firstDay) / 86400;
+    if (_day == currentDay) {
+      return DayState.BET;
+    } else if (_day > currentDay) {
+      // Bet in the future
+      return DayState.WAIT;
+    } else if (dayInfos[_day].grandPrize == 0) {
+      // BetDay is in the past but there were no bets
+      return DayState.FINAL;
+    } else if (dayInfos[_day].witnetRequestId == 0) {
+      // BetDay is in the past with prices but no DR yet
+      return DayState.RESOLVE;
+    } else if (dayInfos[_day].result.length == 0) {
+      // BetDay is in the past with prices and DR but no result yet
+      return DayState.PAYOUT;
+    }  else {
+      // BetDay is in the past with prices, DR and the results
+      return  DayState.FINAL;
+    }
+  }
+
   // Reads totalamount bet for a day||token
   function totalAmountTokenDay(uint8 _day, uint8 _tokenId) public view returns (uint256) {
-    // read totalAmount from bets[u8Concat]
+    return bets[u8Concat(_day, _tokenId)].totalAmount;
   }
 
   // Reads your participations for a given day
@@ -75,7 +118,7 @@ contract TokenPriceContest {
 
   // Reads information for a given day
   function getDayInfo(uint8 _day) public view returns (DayInfo memory) {
-    // return dayInfos[_day]
+    return dayInfos[_day];
   }
 
   // Read last block timestamp and calculate difference with firstDay timestamp
@@ -91,7 +134,7 @@ contract TokenPriceContest {
   }
 
   // Ranks a given input array
-  function rank(int128[] memory input) public pure returns (uint8[] memory){
+  function rank(int128[] memory input) public pure returns (uint8[] memory) {
     // Ranks the given input array
   }
 
