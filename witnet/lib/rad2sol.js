@@ -141,12 +141,10 @@ function execute (code, requestName) {
 object):
       
          export {request as default}
-
     2: \x1b[1mThe exported object is not an instance of the \`Request\` class\x1b[0m
        Please double-check that ${requestName} contains an instance of the \`Request\` class and it is exported as \
 explained in issue 1.
        New instances of the \`Request\` class are created like this:
-
          const request = new Request()
          
        The Witnet documentation contains a complete tutorial on how to create requests from scratch:
@@ -188,9 +186,7 @@ function intoSol (hex, fileName) {
   const contractName = fileName.replace(/\.js/, "")
 
   return `pragma solidity ^0.5.0;
-
 import "witnet-ethereum-bridge/contracts/Request.sol";
-
 // The bytecode of the ${contractName} request that will be sent to Witnet
 contract ${contractName}Request is Request {
   constructor () Request(hex"${hex}") public { }
@@ -215,9 +211,7 @@ const BlockRelay = artifacts.require("BlockRelay")
 const WitnetBridgeInterface = artifacts.require("WitnetBridgeInterface")
 const CBOR = artifacts.require("CBOR")
 const Witnet = artifacts.require("Witnet")
-
 const addresses = ${JSON.stringify(libAddresses, null, 2).replace(/(["}])$\n/gm, (m, p1) => `${p1},\n`)}
-
 module.exports = function (deployer, network) {
   if (network in addresses) {
     Witnet.address = addresses[network]["Witnet"]
@@ -241,7 +235,6 @@ module.exports = function (deployer, network) {
 const Witnet = artifacts.require("Witnet")
 const WitnetBridgeInterface = artifacts.require("WitnetBridgeInterface")
 ${artifacts.map(artifact => `const ${artifact} = artifacts.require("${artifact}")`).join("\n")}
-
 module.exports = function (deployer) {
   deployer.link(Witnet, [${artifacts.join(", ")}])
 ${artifacts.map(artifact => {
