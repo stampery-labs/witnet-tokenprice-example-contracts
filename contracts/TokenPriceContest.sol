@@ -87,7 +87,7 @@ contract TokenPriceContest {
 
   // Needs to return l||r
   function u8Concat(uint8 _l, uint8 _r) public pure returns (uint16) {
-
+    return (uint16(_l) << 8) | _r;
   }
 
   // Ranks a given input array

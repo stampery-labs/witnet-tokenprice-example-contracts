@@ -15,4 +15,18 @@ contract("TokenPriceContest", accounts => {
   //   })
   // })
 
+  describe("Concatenate uint8 into uint16: ", () => {
+    it(`should concat 0xff 0xee`, async () => {
+      const result = await contest.u8Concat.call(web3.utils.hexToBytes("0xff"), web3.utils.hexToBytes("0xee"))
+      assert.equal(web3.utils.toHex(result), "0xffee")
+    })
+    it(`should concat 0x00 0xee`, async () => {
+      const result = await contest.u8Concat.call(web3.utils.hexToBytes("0x00"), web3.utils.hexToBytes("0xee"))
+      assert.equal(web3.utils.toHex(result), 0xee)
+    })
+    it(`should concat 0xff 0x00`, async () => {
+      const result = await contest.u8Concat.call(web3.utils.hexToBytes("0xff"), web3.utils.hexToBytes("0x00"))
+      assert.equal(web3.utils.toHex(result), "0xff00")
+    })
+  })
 })
