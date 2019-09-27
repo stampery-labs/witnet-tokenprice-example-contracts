@@ -1,17 +1,22 @@
 pragma solidity ^0.5.0;
 pragma experimental ABIEncoderV2;
+import "witnet-ethereum-bridge/contracts/UsingWitnet.sol";
+import "./requests/TokenGradient.sol";
 
-contract TokenPriceContest {
+contract TokenPriceContest is UsingWitnet {
 
   event BetPlaced(uint8, uint8, address, uint256);
+  event ResolveTriggered(uint8, uint256, address);
 
   // States define the action allowed in the current window
-  enum DayState{BET, WAIT, RESOLVE, PAYOUT, FINAL}
+  enum DayState{BET, WAIT, RESOLVE, PAYOUT, FINAL, INVALID}
   struct TokenDay{
     uint256 totalAmount;
     mapping (address => uint256) participations;
+    mapping (address => bool) paid;
   }
-
+  Request tokenGradientRequest;
+  uint8 tokenLimit;
   // Structure with all the current day bets information
   struct DayInfo{
     // total prize for a day
@@ -22,8 +27,9 @@ contract TokenPriceContest {
     int128[] result;
     // id of the data request inserted in the WBI
     uint256 witnetRequestId;
+    // result was read from WBI
+    bool witnetReadResult;
   }
-
   // Mapping containing the day info
   mapping(uint8 => DayInfo) dayInfos;
 
@@ -33,9 +39,22 @@ contract TokenPriceContest {
   // first day from which start counting to enable certain operations
   uint256 public firstDay;
 
-  constructor (uint256 _firstDay) public {
+  // fees to include resquest and report result
+  uint256 requestFee;
+  uint256 resultFee;
+
+  constructor (uint256 _firstDay, uint8 _tokenLimit, address _wbi, uint256 _requestFee, uint256 _resultFee) UsingWitnet(_wbi) public {
     // TODO: Verify that firstDay is valid? after block.timestamp?
     firstDay = _firstDay;
+    tokenLimit = _tokenLimit;
+    requestFee = _requestFee;
+    resultFee = _resultFee;
+
+    tokenGradientRequest = new TokenGradientRequest();
+  }
+
+  function getTimestamp() public view returns (uint256){
+    return block.timestamp;
   }
 
   // Executes data request
@@ -47,14 +66,15 @@ contract TokenPriceContest {
 
     // Check if BET is allowed
     // TODO: change getDayState as below
-    require(getDayState(firstDay, block.timestamp, betDay) == DayState.BET);
+    require(getDayState(firstDay, betDay) == DayState.BET);
 
     // Create Bet: u8Concat
     uint16 betId = u8Concat(betDay, _tokenId);
 
     // Upsert Bets mapping (day||tokenId) with TokenDay
     bets[betId].totalAmount = bets[betId].totalAmount + msg.value;
-    bets[betId].participations[msg.sender] = msg.value;
+    bets[betId].participations[msg.sender] += msg.value;
+    bets[betId].paid[msg.sender] = false;
 
     // Upsert DayInfo (day)
     dayInfos[betDay].grandPrize = dayInfos[betDay].grandPrize + msg.value;
@@ -64,32 +84,72 @@ contract TokenPriceContest {
 
   // Executes data request
   function resolve(uint8 _day) public payable {
-    // This method should check that day is at most current_day - 2
-    // This method should "only" be callable if state is WAIT or BET
-    // Post result into WBI and set the state (PAYOUT) and request ID in DayInfo
+    // Check if BET is allowed
+    // TODO: change getDayState as below
+    require(getDayState(firstDay, _day) == DayState.RESOLVE);
+
+    uint256 requestId = witnetPostRequest(tokenGradientRequest, requestFee, resultFee);
+    dayInfos[_day].witnetRequestId = requestId;
+
+    emit ResolveTriggered(_day, requestId, msg.sender);
   }
 
   // Pays out upon data request resolution
   function payout(uint8 _day) public payable {
-    // This method should only be callable once a day
-    // This method should only be callable if the data request has been resolved
-    // Read result from WBI and set the result, ranking and state (FINAL) in DayInfo
-    // If result successful pay participants that bet on the winning asset
-    // Else refund participants
+    require((getDayState(firstDay, _day) == DayState.PAYOUT) || (getDayState(firstDay, _day) == DayState.FINAL));
+
+    //check if result has been read
+    if (dayInfos[_day].witnetReadResult == false){
+      Witnet.Result memory result = witnetReadResult(dayInfos[_day].witnetRequestId);
+      dayInfos[_day].witnetReadResult = true;
+      if (result.isOk()) {
+        int128[] memory requestResult = result.asInt128Array();
+        uint8[] memory ranked = rank(requestResult);
+
+        dayInfos[_day].result = requestResult;
+        dayInfos[_day].ranking = ranked;
+      }
+    }
+
+    if (dayInfos[_day].result.length == 0){
+      uint16 offset = u8Concat(_day, 0);
+      for (uint16 i = 0; i<tokenLimit; i++){
+        if(bets[i+offset].paid[msg.sender] == false &&
+          bets[i+offset].participations[msg.sender] > 0){
+          bets[i+offset].paid[msg.sender] = true;
+          msg.sender.transfer(bets[i+offset].participations[msg.sender]);
+        }
+      }
+    }
+    else{
+      //TODO: Evaluate tie
+      uint16 dayTokenId = u8Concat(_day, dayInfos[_day].ranking[0]);
+      require(bets[dayTokenId].paid[msg.sender] == false && bets[dayTokenId].participations[msg.sender] > 0);
+      uint256 grandPrize = dayInfos[_day].grandPrize;
+      uint256 winnerAmount = bets[dayTokenId].totalAmount;
+      uint256 prize_share = grandPrize / winnerAmount;
+      uint256 prize = bets[dayTokenId].participations[msg.sender] * prize_share;
+      bets[dayTokenId].paid[msg.sender] = true;
+      msg.sender.transfer(prize);
+    }
   }
 
   // TODO: change _firstDay argument for attribute
   // TODO: retrieve _now from block.timestamp
-  function getDayState(uint _firstDay, uint _now, uint8 _day) public view returns (DayState) {
-    uint256 currentDay = (_now - _firstDay) / 86400;
+  function getDayState(uint _firstDay, uint8 _day) public returns (DayState) {
+    uint256 timestamp = getTimestamp();
+    uint256 currentDay = (timestamp - _firstDay) / 86400;
     if (_day == currentDay) {
       return DayState.BET;
     } else if (_day > currentDay) {
       // Bet in the future
-      return DayState.WAIT;
+      return DayState.INVALID;
     } else if (dayInfos[_day].grandPrize == 0) {
       // BetDay is in the past but there were no bets
       return DayState.FINAL;
+    } else if (_day == currentDay-1){
+      // Waiting day
+      return DayState.WAIT;
     } else if (dayInfos[_day].witnetRequestId == 0) {
       // BetDay is in the past with prices but no DR yet
       return DayState.RESOLVE;
@@ -109,11 +169,13 @@ contract TokenPriceContest {
 
   // Reads your participations for a given day
   function readMyBetsDay(uint8 _day) public view returns (uint256[] memory) {
-    // uint256[] result
-    // offset = u8Concat for first tokenId
-    // Iterate from 0 to tokens.length()
-      // result[i] = bets[i+offset].participations[msg.address]
-   // Result contains participations ordered by token
+    uint256[] memory results = new uint256[](tokenLimit);
+    uint16 offset = u8Concat(_day, 0);
+    for (uint16 i = 0; i<tokenLimit; i++){
+      results[i] = bets[i+offset].participations[msg.sender];
+    }
+
+    return results;
   }
 
   // Reads information for a given day
@@ -122,8 +184,9 @@ contract TokenPriceContest {
   }
 
   // Read last block timestamp and calculate difference with firstDay timestamp
-  function calculateDay() public view returns (uint8) {
-    uint256 daysDiff = (block.timestamp - firstDay) / 86400;
+  function calculateDay() public returns (uint8) {
+    uint256 timestamp = getTimestamp();
+    uint256 daysDiff = (timestamp - firstDay) / 86400;
 
     return uint8(daysDiff);
   }
@@ -136,6 +199,25 @@ contract TokenPriceContest {
   // Ranks a given input array
   function rank(int128[] memory input) public pure returns (uint8[] memory) {
     // Ranks the given input array
-  }
+    uint8[] memory ranked = new uint8[](input.length);
+    uint8[] memory result = new uint8[](input.length);
 
+    for (uint8 i = 0; i < input.length; i++){
+      uint8 curRank = 0;
+      for (uint8 j = 0; j < i; j++){
+        if(input[j] > input[i]){
+          curRank++;
+        }
+        else{
+          ranked[j]++;
+        }
+      }
+      ranked[i] = curRank;
+    }
+
+    for (uint8 i = 0; i < ranked.length; i++){
+      result[ranked[i]] = i;
+    }
+    return result;
+  }
 }
