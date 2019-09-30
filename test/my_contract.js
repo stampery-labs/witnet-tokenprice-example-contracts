@@ -245,7 +245,7 @@ contract("TokenPriceContestTestHelper", accounts => {
       })
       assert.equal(result.toNumber(), DayState.PAYOUT)
     })
-    /*it("should call payout with unsuccesful result and pay each one their bet", async () => {
+    it("should call payout with unsuccesful result and pay each one their bet", async () => {
       const resBytes = web3.utils.hexToBytes("0xD8270001869F02030405060708090A")
       let balanceBefore = await web3.eth.getBalance(contest.address)
       await wbi.setDrResult(resBytes, 2, {
@@ -257,7 +257,7 @@ contract("TokenPriceContestTestHelper", accounts => {
 
       let balanceAfter = await web3.eth.getBalance(contest.address)
       assert.equal(parseInt(balanceAfter), parseInt(balanceBefore) - 1000)
-    })*/
+    })
   })
 })
 
