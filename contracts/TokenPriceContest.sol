@@ -7,6 +7,9 @@ contract TokenPriceContest is UsingWitnet {
 
   event BetPlaced(uint8, uint8, address, uint256);
   event ResolveTriggered(uint8, uint256, address);
+  event ReadResult(bytes);
+  event RankingWinner(uint8);
+  event ShowMeTheMoneyBitch(uint256);
 
   // States define the action allowed in the current window
   enum DayState{BET, WAIT, RESOLVE, PAYOUT, FINAL, INVALID}
@@ -59,7 +62,7 @@ contract TokenPriceContest is UsingWitnet {
 
   // Executes data request
   function placeBet(uint8 _tokenId) public payable {
-    require(msg.value > 0);
+    require(msg.value > 0, "Should insert a positive amount");
 
     // Calculate the day of the current bet
     uint8 betDay = calculateDay();
@@ -86,6 +89,7 @@ contract TokenPriceContest is UsingWitnet {
   function resolve(uint8 _day) public payable {
     // Check if BET is allowed
     // TODO: change getDayState as below
+    require(msg.value >= requestFee + resultFee, "Not enough value to resolve the data request");
     require(getDayState(firstDay, _day) == DayState.RESOLVE);
 
     uint256 requestId = witnetPostRequest(tokenGradientRequest, requestFee, resultFee);
@@ -98,37 +102,40 @@ contract TokenPriceContest is UsingWitnet {
   function payout(uint8 _day) public payable {
     require((getDayState(firstDay, _day) == DayState.PAYOUT) || (getDayState(firstDay, _day) == DayState.FINAL));
 
-    //check if result has been read
+    // check if result has been read
     if (dayInfos[_day].witnetReadResult == false){
       Witnet.Result memory result = witnetReadResult(dayInfos[_day].witnetRequestId);
+      emit ReadResult(result.cborValue.buffer.data);
+      require(result.cborValue.buffer.data.length > 0, "Result not posted yet");
       dayInfos[_day].witnetReadResult = true;
       if (result.isOk()) {
         int128[] memory requestResult = result.asInt128Array();
         uint8[] memory ranked = rank(requestResult);
-
         dayInfos[_day].result = requestResult;
         dayInfos[_day].ranking = ranked;
       }
     }
 
-    if (dayInfos[_day].result.length == 0){
+    if (dayInfos[_day].result.length == 0) {
+      emit RankingWinner(dayInfos[_day].ranking[0]);
       uint16 offset = u8Concat(_day, 0);
-      for (uint16 i = 0; i<tokenLimit; i++){
+      for (uint16 i = 0; i<tokenLimit; i++) {
         if(bets[i+offset].paid[msg.sender] == false &&
-          bets[i+offset].participations[msg.sender] > 0){
+          bets[i+offset].participations[msg.sender] > 0) {
           bets[i+offset].paid[msg.sender] = true;
           msg.sender.transfer(bets[i+offset].participations[msg.sender]);
         }
       }
     }
-    else{
-      //TODO: Evaluate tie
+    else {
       uint16 dayTokenId = u8Concat(_day, dayInfos[_day].ranking[0]);
-      require(bets[dayTokenId].paid[msg.sender] == false && bets[dayTokenId].participations[msg.sender] > 0);
+      require(bets[dayTokenId].paid[msg.sender] == false, "Address already paid");
+      require(bets[dayTokenId].participations[msg.sender] > 0, "Address has no bets in the winning token");
       uint256 grandPrize = dayInfos[_day].grandPrize;
       uint256 winnerAmount = bets[dayTokenId].totalAmount;
       uint256 prize_share = grandPrize / winnerAmount;
       uint256 prize = bets[dayTokenId].participations[msg.sender] * prize_share;
+
       bets[dayTokenId].paid[msg.sender] = true;
       msg.sender.transfer(prize);
     }
@@ -147,7 +154,7 @@ contract TokenPriceContest is UsingWitnet {
     } else if (dayInfos[_day].grandPrize == 0) {
       // BetDay is in the past but there were no bets
       return DayState.FINAL;
-    } else if (_day == currentDay-1){
+    } else if (_day == currentDay - 1){
       // Waiting day
       return DayState.WAIT;
     } else if (dayInfos[_day].witnetRequestId == 0) {
