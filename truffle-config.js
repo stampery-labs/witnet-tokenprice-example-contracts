@@ -34,6 +34,11 @@ module.exports = {
       provider: require("ganache-cli").provider({ gasLimit: 100000000 }),
       network_id: "*",
     },
+    local: {
+      host: "127.0.0.1",     // Localhost (default: none)
+      port: 8545,            // Standard Ethereum port (default: none)
+      network_id: "*",       // Any network (default: none)
+    },
     rinkeby: {
       network_id: 4,
       host: "localhost",

@@ -5,5 +5,5 @@ const WitnetBridgeInterface = artifacts.require("WitnetBridgeInterface")
 const TokenPriceContest = artifacts.require("TokenPriceContest")
 module.exports = function (deployer) {
   deployer.link(Witnet, [TokenPriceContest])
-  deployer.deploy(TokenPriceContest, new Date().getTime() / 1000, 900, 4, WitnetBridgeInterface.address, 1, 1)
+  deployer.deploy(TokenPriceContest, Math.round(new Date().getTime() / 1000), 900, 4, WitnetBridgeInterface.address, 1, 1)
 }
