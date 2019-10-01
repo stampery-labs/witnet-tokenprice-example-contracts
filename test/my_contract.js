@@ -86,19 +86,19 @@ contract("TokenPriceContestTestHelper", accounts => {
     it("should get day state BET because its today", async () => {
       const tx = contest.setTimestamp(now0)
       waitForHash(tx)
-      const result = await contest.getDayState.call(day0, 0)
+      const result = await contest.getDayState.call(0)
       assert.equal(result.toNumber(), DayState.BET)
     })
     it("should get day state FINAL because (for yesterday and no bets)", async () => {
       const tx = contest.setTimestamp(now1)
       waitForHash(tx)
-      const result = await contest.getDayState.call(day0, 0)
+      const result = await contest.getDayState.call(0)
       assert.equal(result.toNumber(), DayState.FINAL)
     })
     it("should get day state INVALID because is for tomorrow", async () => {
       const tx = contest.setTimestamp(now0)
       waitForHash(tx)
-      const result = await contest.getDayState.call(day0, 1)
+      const result = await contest.getDayState.call(1)
       assert.equal(result.toNumber(), DayState.INVALID)
     })
   })
@@ -133,6 +133,12 @@ contract("TokenPriceContestTestHelper", accounts => {
       const tx = contest.placeBet(0, { from: accounts[0], value: web3.utils.toWei("1000", "wei") })
       waitForHash(tx)
     })
+    it("should be revert due to place bet with 0 value", async () => {
+      await truffleAssert.reverts(contest.placeBet(0, {
+        from: accounts[0],
+        value: web3.utils.toWei("0", "wei"),
+      }), "Should insert a positive amount")
+    })
     it("should read the total amount of previous bet", async () => {
       const result = await contest.totalAmountTokenDay.call(0, 0)
       assert.equal(result, web3.utils.toWei("1000", "wei"))
@@ -166,7 +172,7 @@ contract("TokenPriceContestTestHelper", accounts => {
         from: accounts[1],
       })
       waitForHash(tx)
-      const result = await contest.getDayState.call(day0, 0)
+      const result = await contest.getDayState.call(0)
       assert.equal(result.toNumber(), DayState.WAIT)
     })
     it("should be able to place a bet in the second day", async () => {
@@ -177,13 +183,34 @@ contract("TokenPriceContestTestHelper", accounts => {
       const tx = contest.placeBet(3, { from: accounts[2], value: web3.utils.toWei("1000", "wei") })
       waitForHash(tx)
     })
+    it("should revert due to bet are not in RESOLVE state", async () => {
+      await truffleAssert.reverts(contest.resolve(0, {
+        from: accounts[0],
+        value: 2,
+      }), "Should be in RESOLVE state")
+    })
     it("should get day state RESOLVE because (for 2 days ago with bets)", async () => {
       const tx = contest.setTimestamp(now2, {
         from: accounts[1],
       })
       waitForHash(tx)
-      const result = await contest.getDayState.call(day0, 0)
+      const result = await contest.getDayState.call(0)
       assert.equal(result.toNumber(), DayState.RESOLVE)
+    })
+    it("should revert due to have not enough value to resolve the data request", async () => {
+      const tx = contest.setTimestamp(now2, {
+        from: accounts[1],
+      })
+      waitForHash(tx)
+      await truffleAssert.reverts(contest.resolve(0, {
+        from: accounts[0],
+        value: 0,
+      }), "Not enough value to resolve the data request")
+    })
+    it("should revert due to bet are not in PAYOUT or FINAL state", async () => {
+      await truffleAssert.reverts(contest.payout(0, {
+        from: accounts[0],
+      }), "Should be in PAYOUT or FINAL state")
     })
     it("should get day state PAYOUT after calling resolve)", async () => {
       const tx = contest.setTimestamp(now2, {
@@ -192,10 +219,10 @@ contract("TokenPriceContestTestHelper", accounts => {
       waitForHash(tx)
       const resolveTx = contest.resolve(0, {
         from: accounts[1],
-        "value": 4,
+        "value": 2,
       })
       waitForHash(resolveTx)
-      const result = await contest.getDayState.call(day0, 0, {
+      const result = await contest.getDayState.call(0, {
         from: accounts[1],
       })
       assert.equal(result.toNumber(), DayState.PAYOUT)
@@ -223,22 +250,22 @@ contract("TokenPriceContestTestHelper", accounts => {
         from: accounts[0],
       }), "Address already paid")
     })
-    it("should revert because contestant already paid", async () => {
+    it("should revert because contestant has no bets in the winning token", async () => {
       await truffleAssert.reverts(contest.payout(0, {
         from: accounts[2],
       }), "Address has no bets in the winning token")
     })
-    it("should get day state PAYOUT after calling resolve the second day)", async () => {
+    it("should get day state PAYOUT after calling resolve the second day", async () => {
       const tx = contest.setTimestamp(now3, {
         from: accounts[1],
       })
       waitForHash(tx)
       const resolveTx = contest.resolve(1, {
         from: accounts[1],
-        "value": 4,
+        "value": 2,
       })
       waitForHash(resolveTx)
-      const result = await contest.getDayState.call(day0, 1, {
+      const result = await contest.getDayState.call(1, {
         from: accounts[1],
       })
       assert.equal(result.toNumber(), DayState.PAYOUT)

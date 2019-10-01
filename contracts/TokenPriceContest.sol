@@ -78,10 +78,6 @@ contract TokenPriceContest is UsingWitnet {
     // Calculate the day of the current bet
     uint8 betDay = calculateDay();
 
-    // Check if BET is allowed
-    // TODO: change getDayState as below
-    require(getDayState(firstDay, betDay) == DayState.BET);
-
     // Create Bet: u8Concat
     uint16 betId = u8Concat(betDay, _tokenId);
 
@@ -99,9 +95,8 @@ contract TokenPriceContest is UsingWitnet {
   // Executes data request
   function resolve(uint8 _day) public payable {
     // Check if BET is allowed
-    // TODO: change getDayState as below
     require(msg.value >= requestFee + resultFee, "Not enough value to resolve the data request");
-    require(getDayState(firstDay, _day) == DayState.RESOLVE);
+    require(getDayState(_day) == DayState.RESOLVE, "Should be in RESOLVE state");
 
     uint256 requestId = witnetPostRequest(tokenGradientRequest, requestFee, resultFee);
     dayInfos[_day].witnetRequestId = requestId;
@@ -111,7 +106,7 @@ contract TokenPriceContest is UsingWitnet {
 
   // Pays out upon data request resolution
   function payout(uint8 _day) public payable {
-    require((getDayState(firstDay, _day) == DayState.PAYOUT) || (getDayState(firstDay, _day) == DayState.FINAL));
+    require((getDayState(_day) == DayState.PAYOUT) || (getDayState(_day) == DayState.FINAL), "Should be in PAYOUT or FINAL state");
 
     // check if result has been read
     if (dayInfos[_day].witnetReadResult == false){
@@ -149,11 +144,10 @@ contract TokenPriceContest is UsingWitnet {
     }
   }
 
-  // TODO: change _firstDay argument for attribute
   // TODO: retrieve _now from block.timestamp
-  function getDayState(uint _firstDay, uint8 _day) public returns (DayState) {
+  function getDayState(uint8 _day) public returns (DayState) {
     uint256 timestamp = getTimestamp();
-    uint256 currentDay = (timestamp - _firstDay) / contestPeriod;
+    uint256 currentDay = (timestamp - firstDay) / contestPeriod;
     if (_day == currentDay) {
       return DayState.BET;
     } else if (_day > currentDay) {
