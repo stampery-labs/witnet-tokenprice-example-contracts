@@ -46,9 +46,20 @@ contract TokenPriceContest is UsingWitnet {
   uint256 requestFee;
   uint256 resultFee;
 
-  constructor (uint256 _firstDay, uint8 _tokenLimit, address _wbi, uint256 _requestFee, uint256 _resultFee) UsingWitnet(_wbi) public {
+  // Time period for each contest
+  uint256 contestPeriod;
+
+  constructor(
+    uint256 _firstDay,
+    uint256 _contestPeriod,
+    uint8 _tokenLimit,
+    address _wbi,
+    uint256 _requestFee,
+    uint256 _resultFee) UsingWitnet(_wbi) public
+  {
     // TODO: Verify that firstDay is valid? after block.timestamp?
     firstDay = _firstDay;
+    contestPeriod = _contestPeriod;
     tokenLimit = _tokenLimit;
     requestFee = _requestFee;
     resultFee = _resultFee;
@@ -142,7 +153,7 @@ contract TokenPriceContest is UsingWitnet {
   // TODO: retrieve _now from block.timestamp
   function getDayState(uint _firstDay, uint8 _day) public returns (DayState) {
     uint256 timestamp = getTimestamp();
-    uint256 currentDay = (timestamp - _firstDay) / 86400;
+    uint256 currentDay = (timestamp - _firstDay) / contestPeriod;
     if (_day == currentDay) {
       return DayState.BET;
     } else if (_day > currentDay) {
