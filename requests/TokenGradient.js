@@ -8,7 +8,18 @@ const coincap = new Witnet.Source("https://api.coincap.io/v2/assets")
   .filter(new Witnet.Script([Witnet.TYPES.MAP, Witnet.TYPES.BYTES])
     .get("symbol")
     .asString()
-    .match({ "BTC": true, "ETH": true, "XRP": true, "LTC": true }, false)
+    .match({
+      "ATOM": true,
+      "BTC": true,
+      "ETC": true,
+      "ETH": true,
+      "GNT": true,
+      "LINK": true,
+      "MKR": true,
+      "REP": true,
+      "XTZ": true,
+      "ZEC": true,
+    }, false)
   ).sort(new Witnet.Script([Witnet.TYPES.MAP, Witnet.TYPES.BYTES])
     .get("symbol")
     .asString()
@@ -25,7 +36,18 @@ const coinlore = new Witnet.Source("https://api.coinlore.com/api/tickers/")
   .filter(new Witnet.Script([Witnet.TYPES.MAP, Witnet.TYPES.BYTES])
     .get("symbol")
     .asString()
-    .match({ "BTC": true, "ETH": true, "XRP": true, "LTC": true }, false)
+    .match({
+      "ATOM": true,
+      "BTC": true,
+      "ETC": true,
+      "ETH": true,
+      "GNT": true,
+      "LINK": true,
+      "MKR": true,
+      "REP": true,
+      "XTZ": true,
+      "ZEC": true,
+    }, false)
   ).sort(new Witnet.Script([Witnet.TYPES.MAP, Witnet.TYPES.BYTES])
     .get("symbol")
     .asString()
@@ -40,7 +62,18 @@ const paprika = new Witnet.Source("https://api.coinpaprika.com/v1/tickers")
   .filter(new Witnet.Script([Witnet.TYPES.MAP, Witnet.TYPES.BYTES])
     .get("symbol")
     .asString()
-    .match({ "BTC": true, "ETH": true, "XRP": true, "LTC": true }, false)
+    .match({
+      "ATOM": true,
+      "BTC": true,
+      "ETC": true,
+      "ETH": true,
+      "GNT": true,
+      "LINK": true,
+      "MKR": true,
+      "REP": true,
+      "XTZ": true,
+      "ZEC": true,
+    }, false)
   ).sort(new Witnet.Script([Witnet.TYPES.MAP, Witnet.TYPES.BYTES])
     .get("symbol")
     .asString()
