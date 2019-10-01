@@ -105,7 +105,6 @@ contract TokenPriceContest is UsingWitnet {
     // check if result has been read
     if (dayInfos[_day].witnetReadResult == false){
       Witnet.Result memory result = witnetReadResult(dayInfos[_day].witnetRequestId);
-      require(result.cborValue.buffer.data.length > 0, "Result not posted yet");
       dayInfos[_day].witnetReadResult = true;
       if (result.isOk()) {
         int128[] memory requestResult = result.asInt128Array();
@@ -114,7 +113,7 @@ contract TokenPriceContest is UsingWitnet {
         dayInfos[_day].ranking = ranked;
       }
     }
-    
+
     if (dayInfos[_day].result.length == 0) {
       uint16 offset = u8Concat(_day, 0);
       for (uint16 i = 0; i<tokenLimit; i++) {

@@ -19,7 +19,6 @@ contract("TokenPriceContestTestHelper", accounts => {
   let witnet
   let wbi
   let blockRelay
-  let id1
   before(async () => {
     blockRelay = await BlockRelay.deployed({
       from: accounts[0],
@@ -32,11 +31,10 @@ contract("TokenPriceContestTestHelper", accounts => {
       from: accounts[0],
       value: web3.utils.toWei("1", "wei"),
     })
-    let txHash1 = await waitForHash(tx1)
-    let txReceipt1 = await web3.eth.getTransactionReceipt(txHash1)
-    id1 = txReceipt1.logs[0].data
+    await waitForHash(tx1)
     const timestamp = Math.round(new Date().getTime() / 1000 - 100)
-    contest = await TokenPriceContestTestHelper.new(timestamp, 10, wbi.address, web3.utils.toWei("1", "wei"), web3.utils.toWei("1", "wei"))
+    contest = await TokenPriceContestTestHelper.new(timestamp, 10, wbi.address, web3.utils.toWei("1", "wei"),
+      web3.utils.toWei("1", "wei"))
   })
   describe("Concatenate uint8 into uint16: ", () => {
     it("should concat 0xff 0xee", async () => {
@@ -121,7 +119,7 @@ contract("TokenPriceContestTestHelper", accounts => {
 
     it("Should set timestamp to now", async () => {
       const tx = contest.setTimestamp(day0, {
-        "from" : accounts[1],
+        from: accounts[1],
       })
       waitForHash(tx)
       const result = await contest.getTimestamp.call()
@@ -165,7 +163,7 @@ contract("TokenPriceContestTestHelper", accounts => {
     })
     it("should get day state WAIT because (for yesterday and we have bets)", async () => {
       const tx = contest.setTimestamp(now1, {
-        "from" : accounts[1],
+        from: accounts[1],
       })
       waitForHash(tx)
       const result = await contest.getDayState.call(day0, 0)
@@ -181,7 +179,7 @@ contract("TokenPriceContestTestHelper", accounts => {
     })
     it("should get day state RESOLVE because (for 2 days ago with bets)", async () => {
       const tx = contest.setTimestamp(now2, {
-        "from" : accounts[1],
+        from: accounts[1],
       })
       waitForHash(tx)
       const result = await contest.getDayState.call(day0, 0)
@@ -189,32 +187,32 @@ contract("TokenPriceContestTestHelper", accounts => {
     })
     it("should get day state PAYOUT after calling resolve)", async () => {
       const tx = contest.setTimestamp(now2, {
-        "from" : accounts[1],
+        from: accounts[1],
       })
       waitForHash(tx)
       const resolveTx = contest.resolve(0, {
-        "from" : accounts[1],
-        "value" : 4,
+        from: accounts[1],
+        "value": 4,
       })
       waitForHash(resolveTx)
       const result = await contest.getDayState.call(day0, 0, {
-        "from" : accounts[1],
+        from: accounts[1],
       })
       assert.equal(result.toNumber(), DayState.PAYOUT)
     })
     it("should revert when trying to read a result that is not ready", async () => {
       await truffleAssert.reverts(contest.payout.call(0, {
         from: accounts[0],
-      }))
+      }), "Found empty buffer when parsing CBOR value")
     })
     it("should call payout with succesful result and refund winnet", async () => {
       const resBytes = web3.utils.hexToBytes("0x8A1A0001869F02030405060708090A")
       let balanceBefore = await web3.eth.getBalance(contest.address)
       await wbi.setDrResult(resBytes, 1, {
-        "from": accounts[1],
+        from: accounts[1],
       })
       await contest.payout(0, {
-        "from": accounts[0],
+        from: accounts[0],
       })
 
       let balanceAfter = await web3.eth.getBalance(contest.address)
@@ -222,37 +220,38 @@ contract("TokenPriceContestTestHelper", accounts => {
     })
     it("should revert because contestant already paid", async () => {
       await truffleAssert.reverts(contest.payout(0, {
-        "from": accounts[0],
+        from: accounts[0],
       }), "Address already paid")
     })
     it("should revert because contestant already paid", async () => {
       await truffleAssert.reverts(contest.payout(0, {
-        "from": accounts[2],
+        from: accounts[2],
       }), "Address has no bets in the winning token")
     })
     it("should get day state PAYOUT after calling resolve the second day)", async () => {
       const tx = contest.setTimestamp(now3, {
-        "from" : accounts[1],
+        from: accounts[1],
       })
       waitForHash(tx)
       const resolveTx = contest.resolve(1, {
-        "from" : accounts[1],
-        "value" : 4,
+        from: accounts[1],
+        "value": 4,
       })
       waitForHash(resolveTx)
       const result = await contest.getDayState.call(day0, 1, {
-        "from" : accounts[1],
+        from: accounts[1],
       })
       assert.equal(result.toNumber(), DayState.PAYOUT)
     })
+
     it("should call payout with unsuccesful result and pay each one their bet", async () => {
       const resBytes = web3.utils.hexToBytes("0xD8270001869F02030405060708090A")
       let balanceBefore = await web3.eth.getBalance(contest.address)
       await wbi.setDrResult(resBytes, 2, {
-        "from": accounts[1],
+        from: accounts[1],
       })
       await contest.payout(1, {
-        "from": accounts[1],
+        from: accounts[1],
       })
 
       let balanceAfter = await web3.eth.getBalance(contest.address)
