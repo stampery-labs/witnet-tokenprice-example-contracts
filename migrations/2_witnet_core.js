@@ -4,7 +4,6 @@ const BlockRelay = artifacts.require("BlockRelay")
 const WitnetBridgeInterface = artifacts.require("WitnetBridgeInterface")
 const CBOR = artifacts.require("CBOR")
 const Witnet = artifacts.require("Witnet")
-
 const addresses = {
   "rinkeby": {
     "BlockRelay": "0x88fEF6805ADD0029a919981D6c5579238B008577",
@@ -19,7 +18,6 @@ const addresses = {
     "WitnetBridgeInterface": "0x1053c33f1DcFF9c8F6F6DC07e3F8cb84e46232A1",
   },
 }
-
 module.exports = function (deployer, network) {
   if (network in addresses) {
     Witnet.address = addresses[network]["Witnet"]

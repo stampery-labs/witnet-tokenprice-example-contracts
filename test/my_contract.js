@@ -33,7 +33,7 @@ contract("TokenPriceContestTestHelper", accounts => {
     })
     await waitForHash(tx1)
     const timestamp = Math.round(new Date().getTime() / 1000 - 100)
-    contest = await TokenPriceContestTestHelper.new(timestamp, 10, wbi.address, web3.utils.toWei("1", "wei"),
+    contest = await TokenPriceContestTestHelper.new(timestamp, 86400, 10, wbi.address, web3.utils.toWei("1", "wei"),
       web3.utils.toWei("1", "wei"))
   })
   describe("Concatenate uint8 into uint16: ", () => {

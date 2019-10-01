@@ -7,7 +7,7 @@ import "../contracts/TokenPriceContest.sol";
 contract TokenPriceContestTestHelper is TokenPriceContest {
   uint256 timestamp;
 
-  constructor (uint256 _firstDay, uint8 _tokenLimit, address _wbi, uint256 _requestFee, uint256 _resultFee) TokenPriceContest(_firstDay, _tokenLimit, _wbi, _requestFee,_resultFee) public {}
+  constructor (uint256 _firstDay, uint256 _contestPeriod, uint8 _tokenLimit, address _wbi, uint256 _requestFee, uint256 _resultFee) TokenPriceContest(_firstDay, _contestPeriod, _tokenLimit, _wbi, _requestFee,_resultFee) public {}
 
   function setTimestamp(uint256 _timestamp) public returns (uint256){
     timestamp = _timestamp;
