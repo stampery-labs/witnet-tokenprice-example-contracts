@@ -42,12 +42,12 @@ contract TokenPriceContest is UsingWitnet {
   // first day from which start counting to enable certain operations
   uint256 public firstDay;
 
-  // fees to include resquest and report result
-  uint256 requestFee;
-  uint256 resultFee;
+  // fees to include request and report result
+  uint256 public requestFee;
+  uint256 public resultFee;
 
   // Time period for each contest
-  uint256 contestPeriod;
+  uint256 public contestPeriod;
 
   constructor(
     uint256 _firstDay,
@@ -74,6 +74,7 @@ contract TokenPriceContest is UsingWitnet {
   // Executes data request
   function placeBet(uint8 _tokenId) public payable {
     require(msg.value > 0, "Should insert a positive amount");
+    // TODO: include require for token limit
 
     // Calculate the day of the current bet
     uint8 betDay = calculateDay();
@@ -167,7 +168,7 @@ contract TokenPriceContest is UsingWitnet {
       return DayState.PAYOUT;
     }  else {
       // BetDay is in the past with prices, DR and the results
-      return  DayState.FINAL;
+      return DayState.FINAL;
     }
   }
 
@@ -195,7 +196,7 @@ contract TokenPriceContest is UsingWitnet {
   // Read last block timestamp and calculate difference with firstDay timestamp
   function calculateDay() public returns (uint8) {
     uint256 timestamp = getTimestamp();
-    uint256 daysDiff = (timestamp - firstDay) / 86400;
+    uint256 daysDiff = (timestamp - firstDay) / contestPeriod;
 
     return uint8(daysDiff);
   }

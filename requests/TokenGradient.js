@@ -71,7 +71,7 @@ const request = new Witnet.Request() // Create a new request
   .addSource(paprika)
   .setAggregator(aggregator) // Set aggregation function
   .setTally(tally) // Set tally function
-  .setQuorum(4, 2) // Require between 4 and 6 witnessing nodes
+  .setQuorum(2, 2) // Require between 4 and 6 witnessing nodes
   .setFees(1003, 1, 1, 1)
 
 export { request as default } // IMPORTANT: export the request as an ES6 module
