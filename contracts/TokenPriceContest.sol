@@ -18,8 +18,10 @@ contract TokenPriceContest is UsingWitnet {
     mapping (address => uint256) participations;
     mapping (address => bool) paid;
   }
+
+  // Witnet Data Request for tokens
   Request tokenGradientRequest;
-  uint8 tokenLimit;
+
   // Structure with all the current day bets information
   struct DayInfo{
     // total prize for a day
@@ -49,6 +51,9 @@ contract TokenPriceContest is UsingWitnet {
   // Time period for each contest
   uint256 public contestPeriod;
 
+  // Number of tokens in the contest
+  uint8 public tokenLimit;
+
   constructor(
     uint256 _firstDay,
     uint256 _contestPeriod,
@@ -77,7 +82,7 @@ contract TokenPriceContest is UsingWitnet {
     // TODO: include require for token limit
 
     // Calculate the day of the current bet
-    uint8 betDay = calculateDay();
+    uint8 betDay = getCurrentDay();
 
     // Create Bet: u8Concat
     uint16 betId = u8Concat(betDay, _tokenId);
@@ -173,12 +178,12 @@ contract TokenPriceContest is UsingWitnet {
   }
 
   // Reads totalamount bet for a day||token
-  function totalAmountTokenDay(uint8 _day, uint8 _tokenId) public view returns (uint256) {
+  function getTotalAmountTokenDay(uint8 _day, uint8 _tokenId) public view returns (uint256) {
     return bets[u8Concat(_day, _tokenId)].totalAmount;
   }
 
   // Reads your participations for a given day
-  function readMyBetsDay(uint8 _day) public view returns (uint256[] memory) {
+  function getMyBetsDay(uint8 _day) public view returns (uint256[] memory) {
     uint256[] memory results = new uint256[](tokenLimit);
     uint16 offset = u8Concat(_day, 0);
     for (uint16 i = 0; i<tokenLimit; i++){
@@ -194,7 +199,7 @@ contract TokenPriceContest is UsingWitnet {
   }
 
   // Read last block timestamp and calculate difference with firstDay timestamp
-  function calculateDay() public returns (uint8) {
+  function getCurrentDay() public returns (uint8) {
     uint256 timestamp = getTimestamp();
     uint256 daysDiff = (timestamp - firstDay) / contestPeriod;
 
@@ -202,12 +207,12 @@ contract TokenPriceContest is UsingWitnet {
   }
 
   // Needs to return l||r
-  function u8Concat(uint8 _l, uint8 _r) public pure returns (uint16) {
+  function u8Concat(uint8 _l, uint8 _r) internal pure returns (uint16) {
     return (uint16(_l) << 8) | _r;
   }
 
   // Ranks a given input array
-  function rank(int128[] memory input) public pure returns (uint8[] memory) {
+  function rank(int128[] memory input) internal pure returns (uint8[] memory) {
     // Ranks the given input array
     uint8[] memory ranked = new uint8[](input.length);
     uint8[] memory result = new uint8[](input.length);

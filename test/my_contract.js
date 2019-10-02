@@ -32,22 +32,22 @@ contract("TokenPriceContestTestHelper", accounts => {
   })
   describe("Concatenate uint8 into uint16: ", () => {
     it("should concat 0xff 0xee", async () => {
-      const result = await contest.u8Concat.call(web3.utils.hexToBytes("0xff"), web3.utils.hexToBytes("0xee"))
+      const result = await contest.u8ConcatPub.call(web3.utils.hexToBytes("0xff"), web3.utils.hexToBytes("0xee"))
       assert.equal(web3.utils.toHex(result), "0xffee")
     })
     it("should concat 0x00 0xee", async () => {
-      const result = await contest.u8Concat.call(web3.utils.hexToBytes("0x00"), web3.utils.hexToBytes("0xee"))
+      const result = await contest.u8ConcatPub.call(web3.utils.hexToBytes("0x00"), web3.utils.hexToBytes("0xee"))
       assert.equal(web3.utils.toHex(result), 0xee)
     })
     it("should concat 0xff 0x00", async () => {
-      const result = await contest.u8Concat.call(web3.utils.hexToBytes("0xff"), web3.utils.hexToBytes("0x00"))
+      const result = await contest.u8ConcatPub.call(web3.utils.hexToBytes("0xff"), web3.utils.hexToBytes("0x00"))
       assert.equal(web3.utils.toHex(result), "0xff00")
     })
   })
 
   describe("Rank int128 array: ", () => {
     it("should rank [3, 0, 15, 5, 6, 8, 6, 1]", async () => {
-      const result = await contest.rank.call([3, 0, 15, 5, 6, 8, 6, 1])
+      const result = await contest.rankPub.call([3, 0, 15, 5, 6, 8, 6, 1])
       const expected = [2, 5, 6, 4, 3, 0, 7, 1]
       var i
       for (i = 0; i < result.length; i++) {
@@ -55,7 +55,7 @@ contract("TokenPriceContestTestHelper", accounts => {
       }
     })
     it("should rank [1, 4, 16, 12, 0, 7, 3]", async () => {
-      const result = await contest.rank.call([1, 4, 16, 12, 0, 7, 3])
+      const result = await contest.rankPub.call([1, 4, 16, 12, 0, 7, 3])
       const expected = [2, 3, 5, 1, 6, 0, 4]
       var i
       for (i = 0; i < result.length; i++) {
@@ -120,7 +120,7 @@ contract("TokenPriceContestTestHelper", accounts => {
       assert.equal(day0, result)
     })
     it("should read that there is no bet", async () => {
-      const result = await contest.totalAmountTokenDay.call(0, 0)
+      const result = await contest.getTotalAmountTokenDay.call(0, 0)
       assert.equal(result, web3.utils.toWei("0", "ether"))
     })
     it("should be able to place bet", async () => {
@@ -134,7 +134,7 @@ contract("TokenPriceContestTestHelper", accounts => {
       }), "Should insert a positive amount")
     })
     it("should read the total amount of previous bet", async () => {
-      const result = await contest.totalAmountTokenDay.call(0, 0)
+      const result = await contest.getTotalAmountTokenDay.call(0, 0)
       assert.equal(result, web3.utils.toWei("1000", "wei"))
     })
     it("should be able to place a second bet", async () => {
@@ -146,7 +146,7 @@ contract("TokenPriceContestTestHelper", accounts => {
       assert.equal(result[0], web3.utils.toWei("2000", "wei"))
     })
     it("should read my total bets of the day", async () => {
-      const result = await contest.readMyBetsDay.call(0)
+      const result = await contest.getMyBetsDay.call(0)
       assert.equal(result[0], web3.utils.toWei("1000", "wei"))
       assert.equal(result[1], web3.utils.toWei("1000", "wei"))
       assert.equal(result[6], web3.utils.toWei("0", "wei"))
@@ -156,7 +156,7 @@ contract("TokenPriceContestTestHelper", accounts => {
       waitForHash(tx)
     })
     it("should read bets from another address", async () => {
-      const result = await contest.readMyBetsDay.call(0, { from: accounts[1] })
+      const result = await contest.getMyBetsDay.call(0, { from: accounts[1] })
       assert.equal(result[0], web3.utils.toWei("0", "wei"))
       assert.equal(result[1], web3.utils.toWei("0", "wei"))
       assert.equal(result[6], web3.utils.toWei("1000", "wei"))

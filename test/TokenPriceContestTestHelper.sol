@@ -16,4 +16,12 @@ contract TokenPriceContestTestHelper is TokenPriceContest {
   function getTimestamp() public view returns (uint256){
     return timestamp;
   }
+
+  function u8ConcatPub(uint8 _l, uint8 _r) public pure returns (uint16) {
+    return u8Concat(_l, _r);
+  }
+
+  function rankPub(int128[] memory input) public pure returns (uint8[] memory) {
+    return rank(input);
+  }
 }
