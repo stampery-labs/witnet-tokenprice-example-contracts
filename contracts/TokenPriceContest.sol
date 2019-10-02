@@ -186,8 +186,7 @@ contract TokenPriceContest is UsingWitnet {
   /// @param _day contest day
   /// @return day state
   function getDayState(uint8 _day) public returns (DayState) {
-    uint256 timestamp = getTimestamp();
-    uint256 currentDay = (timestamp - firstDay) / contestPeriod;
+    uint8 currentDay = getCurrentDay();
     if (_day == currentDay) {
       return DayState.BET;
     } else if (_day > currentDay) {
