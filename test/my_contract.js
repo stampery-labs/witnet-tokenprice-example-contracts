@@ -23,15 +23,9 @@ contract("TokenPriceContestTestHelper", accounts => {
     blockRelay = await BlockRelay.deployed({
       from: accounts[0],
     })
-    const drBytes = web3.utils.fromAscii("This is a DR")
     witnet = await Witnet.new()
     await TokenPriceContestTestHelper.link("Witnet", witnet.address)
     wbi = await WBIHelper.new(blockRelay.address)
-    const tx1 = wbi.postDataRequest(drBytes, web3.utils.toWei("1", "wei"), {
-      from: accounts[0],
-      value: web3.utils.toWei("1", "wei"),
-    })
-    await waitForHash(tx1)
     const timestamp = Math.round(new Date().getTime() / 1000 - 100)
     contest = await TokenPriceContestTestHelper.new(timestamp, 86400, 10, wbi.address, web3.utils.toWei("1", "wei"),
       web3.utils.toWei("1", "wei"))
