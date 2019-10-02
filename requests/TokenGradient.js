@@ -9,8 +9,8 @@ const coincap = new Witnet.Source("https://api.coincap.io/v2/assets")
     .get("symbol")
     .asString()
     .match({
-      "ATOM": true,
       "BTC": true,
+      "EOS": true,
       "ETC": true,
       "ETH": true,
       "GNT": true,
@@ -37,8 +37,8 @@ const coinlore = new Witnet.Source("https://api.coinlore.com/api/tickers/")
     .get("symbol")
     .asString()
     .match({
-      "ATOM": true,
       "BTC": true,
+      "EOS": true,
       "ETC": true,
       "ETH": true,
       "GNT": true,
@@ -63,8 +63,8 @@ const paprika = new Witnet.Source("https://api.coinpaprika.com/v1/tickers")
     .get("symbol")
     .asString()
     .match({
-      "ATOM": true,
       "BTC": true,
+      "EOS": true,
       "ETC": true,
       "ETH": true,
       "GNT": true,
