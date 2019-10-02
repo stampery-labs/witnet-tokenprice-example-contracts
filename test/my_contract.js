@@ -15,6 +15,14 @@ const timeTravel = async seconds => {
 module.exports = timeTravel
 
 contract("TokenPriceContestTestHelper", accounts => {
+  const DayState = {
+    BET: 0,
+    WAIT: 1,
+    RESOLVE: 2,
+    WAIT_RESULT: 3,
+    PAYOUT: 4,
+    INVALID: 5,
+  }
   let contest
   let witnet
   let wbi
@@ -65,14 +73,6 @@ contract("TokenPriceContestTestHelper", accounts => {
   })
 
   describe("Get day states: ", () => {
-    const DayState = {
-      BET: 0,
-      WAIT: 1,
-      RESOLVE: 2,
-      PAYOUT: 3,
-      FINAL: 4,
-      INVALID: 5,
-    }
     const day0 = Math.round(new Date().getTime() / 1000)
     const now0 = day0 + (2 * 60 * 60)
     const now1 = day0 + (26 * 60 * 60)
@@ -83,11 +83,11 @@ contract("TokenPriceContestTestHelper", accounts => {
       const result = await contest.getDayState.call(0)
       assert.equal(result.toNumber(), DayState.BET)
     })
-    it("should get day state FINAL because (for yesterday and no bets)", async () => {
+    it("should get day state PAYOUT because (for yesterday and no bets)", async () => {
       const tx = contest.setTimestamp(now1)
       waitForHash(tx)
       const result = await contest.getDayState.call(0)
-      assert.equal(result.toNumber(), DayState.FINAL)
+      assert.equal(result.toNumber(), DayState.PAYOUT)
     })
     it("should get day state INVALID because is for tomorrow", async () => {
       const tx = contest.setTimestamp(now0)
@@ -98,14 +98,6 @@ contract("TokenPriceContestTestHelper", accounts => {
   })
 
   describe("Place bets: ", () => {
-    const DayState = {
-      BET: 0,
-      WAIT: 1,
-      RESOLVE: 2,
-      PAYOUT: 3,
-      FINAL: 4,
-      INVALID: 5,
-    }
     const day0 = Math.round(new Date().getTime() / 1000)
     const now1 = day0 + (26 * 60 * 60)
     const now2 = day0 + (52 * 60 * 60)
@@ -201,12 +193,12 @@ contract("TokenPriceContestTestHelper", accounts => {
         value: 0,
       }), "Not enough value to resolve the data request")
     })
-    it("should revert due to bet are not in PAYOUT or FINAL state", async () => {
+    it("should revert due to bet are not in WAIT_RESULT or PAYOUT state", async () => {
       await truffleAssert.reverts(contest.payout(0, {
         from: accounts[0],
-      }), "Should be in PAYOUT or FINAL state")
+      }), "Should be in WAIT_RESULT or PAYOUT state")
     })
-    it("should get day state PAYOUT after calling resolve)", async () => {
+    it("should get day state WAIT_RESULT after calling resolve)", async () => {
       const tx = contest.setTimestamp(now2, {
         from: accounts[1],
       })
@@ -219,7 +211,7 @@ contract("TokenPriceContestTestHelper", accounts => {
       const result = await contest.getDayState.call(0, {
         from: accounts[1],
       })
-      assert.equal(result.toNumber(), DayState.PAYOUT)
+      assert.equal(result.toNumber(), DayState.WAIT_RESULT)
     })
     it("should revert when trying to read a result that is not ready", async () => {
       await truffleAssert.reverts(contest.payout.call(0, {
@@ -249,7 +241,7 @@ contract("TokenPriceContestTestHelper", accounts => {
         from: accounts[2],
       }), "Address has no bets in the winning token")
     })
-    it("should get day state PAYOUT after calling resolve the second day", async () => {
+    it("should get day state WAIT_RESULT after calling resolve the second day", async () => {
       const tx = contest.setTimestamp(now3, {
         from: accounts[1],
       })
@@ -262,7 +254,7 @@ contract("TokenPriceContestTestHelper", accounts => {
       const result = await contest.getDayState.call(1, {
         from: accounts[1],
       })
-      assert.equal(result.toNumber(), DayState.PAYOUT)
+      assert.equal(result.toNumber(), DayState.WAIT_RESULT)
     })
 
     it("should call payout with unsuccesful result and pay each one their bet", async () => {
