@@ -3,6 +3,7 @@
 const Witnet = artifacts.require("Witnet")
 const WitnetBridgeInterface = artifacts.require("WitnetBridgeInterface")
 const TokenPriceContest = artifacts.require("TokenPriceContest")
+
 module.exports = function (deployer) {
   deployer.link(Witnet, [TokenPriceContest])
   deployer.deploy(TokenPriceContest, 1569928300, 300, 10, WitnetBridgeInterface.address, 1, 1)
