@@ -87,11 +87,11 @@ const paprika = new Witnet.Source("https://api.coinpaprika.com/v1/tickers")
   )
 
 const aggregator = new Witnet.Aggregator([coincap, coinlore, paprika])
-  // .filter(Witnet.Types.FILTERS.deviationStandard, 2)
+  .filter(Witnet.Types.FILTERS.deviationStandard, 2.5)
   .reduce(Witnet.Types.REDUCERS.averageMean)
 
 const tally = new Witnet.Tally(aggregator)
-  // .filter(Witnet.Types.FILTERS.deviationStandard, 1.5)
+  .filter(Witnet.Types.FILTERS.deviationStandard, 1.5)
   .reduce(Witnet.Types.REDUCERS.averageMean)
   .map(new Witnet.Script([Witnet.TYPES.FLOAT])
     .multiply(10000)
