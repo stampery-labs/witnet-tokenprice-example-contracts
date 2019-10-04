@@ -191,8 +191,7 @@ contract TokenPriceContest is UsingWitnet {
       // Prize calculation
       uint256 grandPrize = dayInfos[_day].grandPrize;
       uint256 winnerAmount = bets[dayTokenId].totalAmount;
-      uint256 prizeShare = grandPrize / winnerAmount;
-      uint256 prize = bets[dayTokenId].participations[msg.sender] * prizeShare;
+      uint256 prize = bets[dayTokenId].participations[msg.sender] * grandPrize / winnerAmount;
       // Set paid flag and Transfer
       bets[dayTokenId].paid[msg.sender] = true;
       msg.sender.transfer(prize);
@@ -310,8 +309,7 @@ contract TokenPriceContest is UsingWitnet {
     // Prize calculation
     uint256 grandPrize = dayInfos[_day].grandPrize;
     uint256 winnerAmount = bets[dayTokenId].totalAmount;
-    uint256 prize_share = grandPrize / winnerAmount;
-    uint256 prize = bets[dayTokenId].participations[msg.sender] * prize_share;
+    uint256 prize = bets[dayTokenId].participations[msg.sender] * grandPrize / winnerAmount;
 
     return prize;
   }
