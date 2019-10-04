@@ -135,6 +135,23 @@ contract TokenPriceContest is UsingWitnet {
     emit ResolveTriggered(_day, requestId, msg.sender);
   }
 
+  /// @dev Gets ranking from Witnet Bridge Interface in case that results are still not written into the contract
+  /// @param _day contest day of the payout
+  function getRankingFromWitnet(uint8 _day) public view returns(uint8[] memory) {
+    uint8[] memory ranking = new uint8[](tokenLimit);
+    // Result has not been read yet (first time)
+    if (dayInfos[_day].witnetReadResult) {
+      return dayInfos[_day].ranking;
+    } else if (isResultReady(_day)) {
+      Witnet.Result memory result = witnetReadResult(dayInfos[_day].witnetRequestId);
+      require(result.isOk(), "Witnet Data request returned an error");
+      int128[] memory requestResult = result.asInt128Array();
+      ranking = rank(requestResult);
+    }
+
+    return ranking;
+  }
+
   /// @dev Pays out upon data request resolution (i.e. state should be `WAIT_RESULT` or `PAYOUT`)
   /// @param _day contest day of the payout
   function payout(uint8 _day) public payable {
@@ -174,8 +191,8 @@ contract TokenPriceContest is UsingWitnet {
       // Prize calculation
       uint256 grandPrize = dayInfos[_day].grandPrize;
       uint256 winnerAmount = bets[dayTokenId].totalAmount;
-      uint256 prize_share = grandPrize / winnerAmount;
-      uint256 prize = bets[dayTokenId].participations[msg.sender] * prize_share;
+      uint256 prizeShare = grandPrize / winnerAmount;
+      uint256 prize = bets[dayTokenId].participations[msg.sender] * prizeShare;
       // Set paid flag and Transfer
       bets[dayTokenId].paid[msg.sender] = true;
       msg.sender.transfer(prize);
@@ -237,6 +254,66 @@ contract TokenPriceContest is UsingWitnet {
     }
 
     return results;
+  }
+
+  /// @dev Reads the participations and wins of the sender for a given day
+  /// @param _day contest day
+  /// @return array with the participations for each token
+  function getMyBetsDayWins(uint8 _day) public view returns (uint256[] memory, uint256) {
+    uint256[] memory results = getMyBetsDay(_day);
+    uint256 amount = getMyDayWins(_day);
+
+    return (results, amount);
+  }
+
+  function getMyDayWins(uint8 _day) public view returns (uint256) {
+    uint256 amount;
+    // Data request is not yet resolved or is still beeing resolved within Witnet
+    if (dayInfos[_day].witnetRequestId == 0 || !isResultReady(_day)) {
+      return amount;
+    }
+
+    // Data request is already in WBI or in the contract
+    uint8[] memory ranking = new uint8[](tokenLimit);
+
+    // Calculate Ranking
+    if (dayInfos[_day].witnetReadResult) {
+      ranking = dayInfos[_day].ranking;
+    } else { // Data request is in WBI but not in contract -> read from WBI
+      Witnet.Result memory result = witnetReadResult(dayInfos[_day].witnetRequestId);
+      if (result.isOk()) {
+        // Data Request is OK -> compute...
+        ranking = rank(result.asInt128Array());
+      }
+    }
+
+    // Empty ranking -> return back participations
+    if (ranking.length == 0) {
+      // Data request with ERROR -> return money to all participants
+      uint16 offset = u8Concat(_day, 0);
+      for (uint16 i = 0; i<tokenLimit; i++) {
+        if (bets[i+offset].paid[msg.sender] == false &&
+          bets[i+offset].participations[msg.sender] > 0) {
+          // bets[i+offset].paid[msg.sender] = true;
+          amount += bets[i+offset].participations[msg.sender];
+        }
+      }
+      return amount;
+    }
+
+    // Ranking available -> compute prize for participant
+    uint16 dayTokenId = u8Concat(_day, ranking[0]);
+    // Already paid or not participated
+    if (bets[dayTokenId].paid[msg.sender] || bets[dayTokenId].participations[msg.sender] == 0) {
+      return amount;
+    }
+    // Prize calculation
+    uint256 grandPrize = dayInfos[_day].grandPrize;
+    uint256 winnerAmount = bets[dayTokenId].totalAmount;
+    uint256 prize_share = grandPrize / winnerAmount;
+    uint256 prize = bets[dayTokenId].participations[msg.sender] * prize_share;
+
+    return prize;
   }
 
   /// @dev Reads day information

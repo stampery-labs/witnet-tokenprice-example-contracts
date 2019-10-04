@@ -39,24 +39,36 @@ module.exports = {
       port: 8545,            // Standard Ethereum port (default: none)
       network_id: "*",       // Any network (default: none)
     },
-    rinkeby: {
+    rinkebyTunnel: {
       network_id: 4,
       host: "localhost",
       port: 9004,
       gas: 6500000,
     },
-    ropsten: {
-      network_id: 3,
-      host: "localhost",
-      port: 9005,
-      gas: 6500000,
-    },
-    goerli: {
+    goerliTunnel: {
       network_id: 5,
       host: "localhost",
       port: 9006,
       gas: 6500000,
     },
+    // rinkeby: {
+    //   network_id: 4,
+    //   host: "localhost",
+    //   port: 9004,
+    //   gas: 6500000,
+    // },
+    // ropsten: {
+    //   network_id: 3,
+    //   host: "localhost",
+    //   port: 9005,
+    //   gas: 6500000,
+    // },
+    // goerli: {
+    //   network_id: 5,
+    //   host: "localhost",
+    //   port: 9006,
+    //   gas: 6500000,
+    // },
   },
 
   // The `solc` compiler is set to optimize output bytecode with 200 runs, which is the standard these days
