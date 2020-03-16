@@ -18,6 +18,9 @@
  *
  */
 
+const HDWalletProvider = require("@truffle/hdwallet-provider")
+require("dotenv").config()
+
 module.exports = {
   /**
    * Networks define how you connect to your ethereum client and let you set the
@@ -34,41 +37,20 @@ module.exports = {
       provider: require("ganache-cli").provider({ gasLimit: 100000000 }),
       network_id: "*",
     },
-    local: {
-      host: "127.0.0.1",     // Localhost (default: none)
-      port: 8545,            // Standard Ethereum port (default: none)
-      network_id: "*",       // Any network (default: none)
-    },
-    rinkebyTunnel: {
+    rinkeby: {
+      provider: () =>
+        new HDWalletProvider(process.env.MNENOMIC, "https://rinkeby.infura.io/v3/" + process.env.INFURA_API_KEY, 2),
       network_id: 4,
-      host: "localhost",
-      port: 9004,
-      gas: 6500000,
+      gas: 3000000,
+      gasPrice: 10000000000,
     },
-    goerliTunnel: {
+    goerli: {
+      provider: () =>
+        new HDWalletProvider(process.env.MNENOMIC, "https://goerli.infura.io/v3/" + process.env.INFURA_API_KEY, 2),
       network_id: 5,
-      host: "localhost",
-      port: 9006,
-      gas: 6500000,
+      gas: 3000000,
+      gasPrice: 10000000000,
     },
-    // rinkeby: {
-    //   network_id: 4,
-    //   host: "localhost",
-    //   port: 9004,
-    //   gas: 6500000,
-    // },
-    // ropsten: {
-    //   network_id: 3,
-    //   host: "localhost",
-    //   port: 9005,
-    //   gas: 6500000,
-    // },
-    // goerli: {
-    //   network_id: 5,
-    //   host: "localhost",
-    //   port: 9006,
-    //   gas: 6500000,
-    // },
   },
 
   // The `solc` compiler is set to optimize output bytecode with 200 runs, which is the standard these days
@@ -78,9 +60,7 @@ module.exports = {
 
   // This plugin allows to verify the source code of your contracts on Etherscan with this command:
   // ETHERSCAN_API_KEY=<your_etherscan_api_key> truffle run verify <contract_name> --network <network_name>
-  plugins: [
-    "truffle-plugin-verify",
-  ],
+  plugins: ["truffle-plugin-verify"],
 
   // This is just for the `truffle-plugin-verify` to catch the API key
   api_keys: {
