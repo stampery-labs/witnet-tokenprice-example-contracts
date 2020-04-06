@@ -15,7 +15,7 @@ module.exports = {
           new HDWalletProvider(
               process.env.MNENOMIC,
               "https://rinkeby.infura.io/v3/" + process.env.INFURA_API_KEY,
-              2
+              0
           ),
       network_id: 4,
       gas: 3000000,
@@ -26,7 +26,7 @@ module.exports = {
           new HDWalletProvider(
               process.env.MNENOMIC,
               "https://goerli.infura.io/v3/" + process.env.INFURA_API_KEY,
-              2
+              0
           ),
       network_id: 5,
       gas: 3000000,

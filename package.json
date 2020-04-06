@@ -23,7 +23,7 @@
     "lint": "eslint ./test",
     "lint:fix": "eslint ./test --fix",
     "migrate": "npx truffle migrate --config flattened-config.js",
-    "migrate-flattened": "npm run flatten && npx truffle migrate",
+    "migrate-flattened": "npm run flatten && npx truffle migrate --config flattened-config.js",
     "postinstall": "mkdir -p build/contracts >/dev/null 2>&1; cp node_modules/witnet-ethereum-bridge/build/contracts/MockWitnetRequestsBoard.json build/contracts",
     "verify-flattened": "npx truffle run verify TokenPriceContest"
   },
