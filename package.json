@@ -16,18 +16,19 @@
     "compile-flattened": "npx truffle compile --all --config flattened-config.js ",
     "coverage": "solidity-coverage",
     "flatten": " mkdir contracts/flattened/ 2>/dev/null; npx truffle-flattener contracts/*.sol > contracts/flattened/Flattened.sol",
-    "fmt": "npm run solium && npm run lint",
-    "fmt!": "npm run solium:fix && npm run lint:fix",
-    "postinstall": "mkdir -p build/contracts >/dev/null 2>1; cp node_modules/witnet-ethereum-bridge/build/contracts/MockWitnetBridgeInterface.json build/contracts",
+    "fmt": "solium -d contracts && eslint ./test",
+    "fmt!": "solium -d contracts --fix && eslint ./test --fix",
     "solium": "solium -d contracts",
     "solium:fix": "solium -d contracts --fix",
-    "lint": "eslint ./requests ./test",
-    "lint:fix": "eslint ./requests ./test --fix",
-    "migrate": "npx truffle migrate",
-    "migrate-flattened": "npm run flatten && npx truffle migrate --config flattened-config.js",
-    "verify-flattened": "npx truffle run verify"
+    "lint": "eslint ./test",
+    "lint:fix": "eslint ./test --fix",
+    "migrate": "npx truffle migrate --config flattened-config.js",
+    "migrate-flattened": "npm run flatten && npx truffle migrate",
+    "postinstall": "mkdir -p build/contracts >/dev/null 2>&1; cp node_modules/witnet-ethereum-bridge/build/contracts/MockWitnetRequestsBoard.json build/contracts",
+    "verify-flattened": "npx truffle run verify TokenPriceContest"
   },
   "dependencies": {
+    "@truffle/hdwallet-provider": "^1.0.34",
     "openzeppelin-solidity": "^2.4.0",
     "witnet-ethereum-bridge": "git+https://github.com/witnet/witnet-ethereum-bridge",
     "witnet-requests": "git+https://github.com/witnet/witnet-requests-js"
@@ -36,7 +37,6 @@
     "@babel/core": "^7.8.3",
     "@babel/plugin-transform-modules-commonjs": "^7.8.3",
     "@babel/register": "^7.8.3",
-    "@truffle/hdwallet-provider": "^1.0.31",
     "babel-plugin-inline-script-import": "^0.0.4",
     "babel-register": "^6.26.0",
     "babel-traverse": "^6.26.0",
@@ -51,11 +51,12 @@
     "ethlint": "^1.2.5",
     "ganache-cli": "^6.8.2",
     "node-eval": "^2.0.0",
+    "prettier": "^2.0.3",
     "protocol-buffers": "^4.1.0",
     "solidity-coverage": "^0.5.11",
     "truffle": "^5.1.10",
     "truffle-assertions": "^0.9.2",
     "truffle-flattener": "git+https://github.com/witnet/truffle-flattener.git#single-experimental",
-    "truffle-plugin-verify": "^0.3.8"
+    "truffle-plugin-verify": "git+https://github.com/rkalis/truffle-plugin-verify.git"
   }
 }

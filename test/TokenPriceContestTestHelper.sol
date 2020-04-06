@@ -1,8 +1,7 @@
-pragma solidity ^0.5.0;
+pragma solidity >=0.5.3 <0.7.0;
 pragma experimental ABIEncoderV2;
 
 import "../contracts/TokenPriceContest.sol";
-
 
 contract TokenPriceContestTestHelper is TokenPriceContest {
   uint256 timestamp;
@@ -13,7 +12,7 @@ contract TokenPriceContestTestHelper is TokenPriceContest {
     timestamp = _timestamp;
   }
 
-  function getTimestamp() public view returns (uint256){
+  function getTimestamp() public view override returns (uint256){
     return timestamp;
   }
 

@@ -11,3 +11,7 @@ coverage.json
 .env
 
 /1
+
+yarn.lock
+package-lock.json
+contracts/flattened

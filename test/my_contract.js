@@ -1,8 +1,8 @@
 const TokenPriceContestTestHelper = artifacts.require("TokenPriceContestTestHelper")
 const Witnet = artifacts.require("Witnet")
-const WBIHelper = artifacts.require("WitnetBridgeInterfaceHelper")
+const WRBTestHelper = artifacts.require('WitnetRequestsBoardTestHelper');
 const truffleAssert = require("truffle-assertions")
-const BlockRelay = artifacts.require("BlockRelay")
+const BlockRelay = artifacts.require('MockWitnetRequestsBoard');
 const jsonrpc = "2.0"
 
 const id = 0
@@ -33,7 +33,7 @@ contract("TokenPriceContestTestHelper", accounts => {
     })
     witnet = await Witnet.new()
     await TokenPriceContestTestHelper.link("Witnet", witnet.address)
-    wbi = await WBIHelper.new(blockRelay.address)
+    wbi = await WRBTestHelper.new(blockRelay.address, 0)
     const timestamp = Math.round(new Date().getTime() / 1000 - 100)
     contest = await TokenPriceContestTestHelper.new(timestamp, 86400, 10, wbi.address, web3.utils.toWei("1", "wei"),
       web3.utils.toWei("1", "wei"))
