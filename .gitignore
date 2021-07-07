@@ -7,3 +7,11 @@ coverage.json
 .vscode
 
 .secret
+
+.env
+
+/1
+
+yarn.lock
+package-lock.json
+contracts/flattened

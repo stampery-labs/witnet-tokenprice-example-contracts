@@ -1,9 +1,8 @@
-pragma solidity ^0.5.0;
+pragma solidity >=0.5.3 <0.7.0;
 pragma experimental ABIEncoderV2;
 
 import "witnet-ethereum-bridge/contracts/UsingWitnet.sol";
 import "./requests/TokenGradient.sol";
-
 
 /**
  * @title Token Price Contest
@@ -95,7 +94,7 @@ contract TokenPriceContest is UsingWitnet {
 
   /// @dev Gets the timestamp of the current block as seconds since unix epoch
   /// @return timestamp
-  function getTimestamp() public view returns (uint256) {
+  function getTimestamp() public view virtual returns (uint256) {
     return block.timestamp;
   }
 
@@ -230,7 +229,7 @@ contract TokenPriceContest is UsingWitnet {
   /// @param _day contest day
   /// @return true, if result is ready
   function isResultReady(uint8 _day) public view returns(bool) {
-    (,,,bytes memory result,,,) = wbi.requests(dayInfos[_day].witnetRequestId);
+    bytes memory result = wrb.readResult(dayInfos[_day].witnetRequestId);
     return result.length > 0;
   }
 
